@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use App\Mail\EventConfirmationMail;
 use App\Models\Booking;
 use App\Models\Event;
-use App\Services\IcsGenerator;
+use App\Repositories\Interfaces\BookingRepositoryInterface;
+use App\Repositories\Interfaces\EventRepositoryInterface;
+use App\Services\BookingService;
+use App\Services\CommonService;
+use App\Services\IcsGeneratorService;
 use Carbon\Carbon;
 use Carbon\CarbonTimeZone;
 use DateTime;
@@ -17,164 +21,52 @@ use Illuminate\Support\Facades\Mail;
 
 class BookingController extends Controller
 {
-    protected $googleCalendarService;
+    protected $commonService;
+    protected $bookingRepository;
+    protected $eventRepository;
 
-    public function __construct(GoogleCalendarService $googleCalendarService)
+    public function __construct(
+        CommonService $commonService,
+        BookingRepositoryInterface $bookingRepository,
+        EventRepositoryInterface $eventRepository,
+    )
     {
-        $this->googleCalendarService = $googleCalendarService;
+        $this->commonService = $commonService;
+        $this->bookingRepository = $bookingRepository;
+        $this->eventRepository = $eventRepository;
+
     }
 
     public function index()
     {
-        $bookings = Booking::with('event')->get();
+        $bookings = $this->bookingRepository->all();
 
         return view('bookings.index', compact('bookings'));
     }
 
     public function store(Request $request, $eventId)
     {
-        $event = Event::findOrFail($eventId);
-
-        $title = $event->name;
-        $description = $event->description;
-        $duration = $event->duration;
-        $attendeeName = $request->input('attendee_name');
-        $attendeeEmail = $request->input('attendee_email');
-        $bookingDate = $request->input('booking_date');
-        $bookingTime = $request->input('booking_time');
-        $timezone = $request->input('booking_timezone');
-
-        // Generate DateTime String
-        $startDateTime = new DateTime($bookingDate . 'T' . $bookingTime, new DateTimeZone($timezone));
-        $endDateTime = clone $startDateTime;
-        $endDateTime->modify("+{$duration} minutes");
-        $startDateTimeStr = $startDateTime->format('Y-m-d\TH:i:s');
-        $endDateTimeStr = $endDateTime->format('Y-m-d\TH:i:s');
-
-
-        $descriptionGoogleCalendar = $description.' with '.$attendeeName . ' (' . $attendeeEmail.')';
-        $googleevents = $this->googleCalendarService->createEvent($title, $descriptionGoogleCalendar, $duration, $attendeeName, $attendeeEmail, $startDateTimeStr, $endDateTimeStr, $timezone);
-
-        Log::Info($googleevents->getId());
-        if($googleevents->getId()){
-            $booking = new Booking();
-            $booking->attendee_name = $request->input('attendee_name');
-            $booking->attendee_email = $request->input('attendee_email');
-            $booking->event_id = $eventId;
-            $booking->booking_date = $request->input('booking_date');
-            $booking->booking_time = $request->input('booking_time');
-            $booking->timezone = $request->input('booking_timezone');
-            $booking->save();
-
-            // Generate ICS file
-            $icsGenerator = new IcsGenerator();
-            [$icsContent, $icsFileName] = $icsGenerator->generateIcsFile(
-                $title,
-                $description,
-                $startDateTimeStr,
-                $endDateTimeStr,
-                $timezone
-            );
-
-            // Send confirmation email with ICS attachment
-            Mail::to($attendeeEmail)->send(new EventConfirmationMail($icsContent, $icsFileName));
-
-            return view('bookings.thank-you', ['booking' => $booking]);
+        $event = $this->eventRepository->find($eventId);
+        $booking = $this->bookingRepository->bookEvent($request, $event);
+        if($booking){
+            return view('bookings.thank-you', compact('booking'));
         }
-        else {
-            //TODO error occured on google calendar service, redirect to error page
+        else{
+            //TODO error events are overlapped. can't create new one.
             return view('events');
         }
+
     }
 
     public function create(Request $request, $eventId)
     {
-        $event = Event::findOrFail($eventId);
+        $event = $this->eventRepository->find($eventId);
         $selectedDate = $request->input('booking_date', now()->toDateString());
         $selectedTimeZone = $request->input('booking_timezone', 'America/New_York');
 
-        $timeSlots = $this->generateTimeSlots($selectedDate, $selectedTimeZone);
-        $timeZones = $this->generateTimeZones();
+        $timeSlots = $this->commonService->generateTimeSlots($selectedDate, $selectedTimeZone);
+        $timeZones = $this->commonService->generateTimeZones();
 
         return view('bookings.calendar', compact('event', 'timeSlots', 'selectedDate', 'selectedTimeZone', 'timeZones'));
-    }
-
-    private function generateTimeSlots($date, $timezone = 'America/New_York', $startHour = 8, $endHour = 17, $interval = 30)
-    {
-        $edTimezone = 'America/New_York';
-        $localTz = new CarbonTimeZone($timezone);
-        $edTz = new CarbonTimeZone($edTimezone);
-        $datetimeLocal = Carbon::parse($date, $localTz);
-
-        $startOfDay = $datetimeLocal->startOfDay();
-        $endOfDay = $datetimeLocal->copy()->endOfDay();
-
-        $timeSlots = [];
-        while ($startOfDay < $endOfDay) {
-            // Convert datetime to EDT
-            $datetimeInEdt = $startOfDay->copy()->setTimezone($edTz);
-            if (!$datetimeInEdt->isWeekend()) {
-                // Define working hours in EDT timezone
-                $startOfWorkdayEDT = $datetimeInEdt->copy()->startOfDay()->setHour($startHour);
-                $endOfWorkdayEDT = $datetimeInEdt->copy()->startOfDay()->setHour($endHour);
-
-                $isInTimeRange = $datetimeInEdt->between($startOfWorkdayEDT, $endOfWorkdayEDT);
-                if($isInTimeRange){
-                    $timeSlots[] = [
-                        'time' => $startOfDay->format('H:i'),
-                    ];
-                }
-            }
-            $startOfDay = $startOfDay->addMinutes($interval);
-        }
-
-        return $timeSlots;
-    }
-
-    private function generateTimeZones(){
-        return [
-            ['value' => 'Pacific/Kwajalein', 'label' => 'Pacific/Kwajalein (GMT+12)'],
-            ['value' => 'Pacific/Fiji', 'label' => 'Pacific/Fiji (GMT+12)'],
-            ['value' => 'Pacific/Auckland', 'label' => 'Pacific/Auckland (GMT+13)'],
-            ['value' => 'Pacific/Chatham', 'label' => 'Pacific/Chatham (GMT+13:45)'],
-            ['value' => 'Pacific/Kiritimati', 'label' => 'Pacific/Kiritimati (GMT+14)'],
-            ['value' => 'Asia/Tokyo', 'label' => 'Asia/Tokyo (GMT+9)'],
-            ['value' => 'Asia/Seoul', 'label' => 'Asia/Seoul (GMT+9)'],
-            ['value' => 'Asia/Kolkata', 'label' => 'Asia/Kolkata (GMT+5:30)'],
-            ['value' => 'Asia/Calcutta', 'label' => 'Asia/Calcutta (GMT+5:30)'],
-            ['value' => 'Asia/Dhaka', 'label' => 'Asia/Dhaka (GMT+6)'],
-            ['value' => 'Asia/Karachi', 'label' => 'Asia/Karachi (GMT+5)'],
-            ['value' => 'Asia/Almaty', 'label' => 'Asia/Almaty (GMT+6)'],
-            ['value' => 'Asia/Yekaterinburg', 'label' => 'Asia/Yekaterinburg (GMT+5)'],
-            ['value' => 'Asia/Tehran', 'label' => 'Asia/Tehran (GMT+3:30)'],
-            ['value' => 'Europe/Moscow', 'label' => 'Europe/Moscow (GMT+3)'],
-            ['value' => 'Asia/Baghdad', 'label' => 'Asia/Baghdad (GMT+3)'],
-            ['value' => 'Europe/Bucharest', 'label' => 'Europe/Bucharest (GMT+2)'],
-            ['value' => 'Europe/Helsinki', 'label' => 'Europe/Helsinki (GMT+2)'],
-            ['value' => 'Africa/Johannesburg', 'label' => 'Africa/Johannesburg (GMT+2)'],
-            ['value' => 'Europe/Paris', 'label' => 'Europe/Paris (GMT+1)'],
-            ['value' => 'Europe/Berlin', 'label' => 'Europe/Berlin (GMT+1)'],
-            ['value' => 'Europe/Lisbon', 'label' => 'Europe/Lisbon (GMT)'],
-            ['value' => 'Europe/London', 'label' => 'Europe/London (GMT)'],
-            ['value' => 'Africa/Casablanca', 'label' => 'Africa/Casablanca (GMT)'],
-            ['value' => 'Atlantic/Azores', 'label' => 'Atlantic/Azores (GMT-1)'],
-            ['value' => 'Europe/Andorra', 'label' => 'Europe/Andorra (GMT+1)'],
-            ['value' => 'Africa/Lagos', 'label' => 'Africa/Lagos (GMT+1)'],
-            ['value' => 'Africa/Abidjan', 'label' => 'Africa/Abidjan (GMT)'],
-            ['value' => 'America/Sao_Paulo', 'label' => 'America/Sao_Paulo (GMT-3)'],
-            ['value' => 'America/Argentina/Buenos_Aires', 'label' => 'America/Argentina/Buenos_Aires (GMT-3)'],
-            ['value' => 'America/Montevideo', 'label' => 'America/Montevideo (GMT-3)'],
-            ['value' => 'America/Chicago', 'label' => 'America/Chicago (GMT-6)'],
-            ['value' => 'America/Regina', 'label' => 'America/Regina (GMT-6)'],
-            ['value' => 'America/Mexico_City', 'label' => 'America/Mexico_City (GMT-6)'],
-            ['value' => 'America/New_York', 'label' => 'America/New_York (GMT-5)'],
-            ['value' => 'America/Toronto', 'label' => 'America/Toronto (GMT-5)'],
-            ['value' => 'America/Halifax', 'label' => 'America/Halifax (GMT-4)'],
-            ['value' => 'America/Santiago', 'label' => 'America/Santiago (GMT-3)'],
-            ['value' => 'America/Adak', 'label' => 'America/Adak (GMT-10)'],
-            ['value' => 'Pacific/Honolulu', 'label' => 'Pacific/Honolulu (GMT-10)'],
-            ['value' => 'Pacific/Pago_Pago', 'label' => 'Pacific/Pago_Pago (GMT-11)'],
-            ['value' => 'Pacific/Apia', 'label' => 'Pacific/Apia (GMT-13)']
-        ];
     }
 }

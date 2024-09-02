@@ -18,7 +18,7 @@ use Eluceo\iCal\Domain\ValueObject\Uri;
 use Eluceo\iCal\Presentation\Factory\CalendarFactory;
 use Illuminate\Support\Facades\Log;
 
-class IcsGenerator
+class IcsGeneratorService
 {
     public function generateIcsFile($title, $description, $startDateTimeStr, $endDateTimeStr, $timezone)
     {
