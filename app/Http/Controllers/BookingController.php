@@ -47,13 +47,14 @@ class BookingController extends Controller
     public function store(Request $request, $eventId)
     {
         $event = $this->eventRepository->find($eventId);
-        $booking = $this->bookingRepository->bookEvent($request, $event);
-        if($booking){
+        $bookingResult = $this->bookingRepository->bookEvent($request, $event);
+        if($bookingResult->get('result')){
+            $booking = $bookingResult->get('booking');
             return view('bookings.thank-you', compact('booking'));
         }
         else{
-            //TODO error events are overlapped. can't create new one.
-            return view('events');
+            $errorMessage = $bookingResult->get('message');
+            return view('bookings.error', compact('errorMessage'));
         }
 
     }

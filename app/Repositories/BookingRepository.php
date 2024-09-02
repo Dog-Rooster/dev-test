@@ -58,7 +58,9 @@ class BookingRepository implements BookingRepositoryInterface
         $endDateTimeStrUTC = $endDateTimeUTC->format('Y-m-d H:i:s');
 
         //TODO check collision
-        if($this->canBookNewEvent()){
+        $overlapBooking = $this->findOverlappingBooking($attendeeEmail, $startDateTimeStrUTC, $endDateTimeStrUTC);
+        if($overlapBooking == null){
+            // No collison detected, you can book new event.
             $descriptionGoogleCalendar = $description.' with '.$attendeeName . ' (' . $attendeeEmail.')';
             $googleevents = $this->googleCalendarService->createEvent($title, $descriptionGoogleCalendar, $duration, $attendeeName, $attendeeEmail, $startDateTimeStr, $endDateTimeStr, $timezone);
 
@@ -88,18 +90,47 @@ class BookingRepository implements BookingRepositoryInterface
                 // Send confirmation email with ICS attachment
                 Mail::to($attendeeEmail)->send(new EventConfirmationMail($icsContent, $icsFileName));
 
-                return $booking;
+                return collect([
+                    'result' => true,
+                    'message' => 'Booking event Successfully',
+                    'booking' => $booking,
+                ]);
             }
             else {
-                return null;
+                return collect([
+                    'result' => false,
+                    'message' => 'Google Calendar Event Failed',
+                ]);
             }
         }
-        else{
-            return null;
+        else {
+            // Collison detected, $overlapBooking is the old booking record.
+            $eventId = $overlapBooking->event_id;
+            $event = Event::findOrFail($eventId);
+            return collect([
+                'result' => false,
+                'message' => "Collision detected with Name: {$event->name} Description: {$event->description} Date: {$overlapBooking->booking_date} {$overlapBooking->booking_time} Duration:{$event->duration}m TimeZone:{$overlapBooking->timezone}",
+            ]);
         }
     }
 
-    private function canBookNewEvent(){
-        return true;
+    private function findOverlappingBooking($email, $startTime, $endTime) {
+        $overlappingBooking = Booking::where('attendee_email', $email)
+            ->where(function ($query) use ($startTime, $endTime) {
+                $query->where(function ($subQuery) use ($startTime, $endTime) {
+                    $subQuery->where('start_datetime', '<=', $startTime)
+                        ->where('end_datetime', '>=', $endTime);
+                })
+                ->orWhere(function ($subQuery) use ($startTime, $endTime) {
+                    $subQuery->where('end_datetime', '<=', $endTime)
+                        ->where('end_datetime', '>', $startTime);
+                })
+                ->orWhere(function ($subQuery) use ($startTime, $endTime) {
+                    $subQuery->where('start_datetime', '>=',$startTime)
+                        ->where('start_datetime', '<', $endTime);
+                });
+            })
+            ->first();
+        return $overlappingBooking;
     }
 }
