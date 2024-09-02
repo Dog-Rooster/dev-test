@@ -1,0 +1,64 @@
+<?php
+
+namespace App\Services;
+
+use DateTime;
+use DateTimeZone;
+use Google\Service\Exception;
+use Google_Client;
+use Google_Service_Calendar;
+use Google_Service_Calendar_Event;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
+
+class GoogleCalendarService
+{
+    protected $client;
+    protected $service;
+    private $calendarId;
+    public function __construct()
+    {
+        Log::info('GoogleCalendarService constructor');
+        $this->client = new Google_Client();
+        $this->client->setAuthConfig(base_path('app/Cred/google-calendar-service.json'));
+        $this->client->setScopes(Google_Service_Calendar::CALENDAR);
+        $this->service = new Google_Service_Calendar($this->client);
+        $this->calendarId = '87e18b0d75e7febd26eabe83872ce297da644e91dc62421ef7f4937c816db868@group.calendar.google.com';
+    }
+
+    public function getClient()
+    {
+        return $this->client;
+    }
+
+    public function getService()
+    {
+        return $this->service;
+    }
+
+    public function listEvents()
+    {
+        $events = $this->service->events->listEvents($this->calendarId);
+        return $events->getItems();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function createEvent($title, $description, $duration, $attendeeName, $attendeeEmail, $startDateTimeStr, $endDateTimeStr, $timezone): \Google\Service\Calendar\Event
+    {
+        $calenderEvent = new Google_Service_Calendar_Event([
+            'summary' => $title,
+            'description' => $description,
+            'start' => [
+                'dateTime' => $startDateTimeStr,
+                'timeZone' => $timezone,
+            ],
+            'end' => [
+                'dateTime' => $endDateTimeStr,
+                'timeZone' => $timezone,
+            ],
+        ]);
+        return $this->service->events->insert($this->calendarId, $calenderEvent);
+    }
+}
