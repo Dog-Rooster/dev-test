@@ -26,7 +26,7 @@ class IcsGeneratorService
         $event = new Event();
         $senderEmail = env('MAIL_FROM_ADDRESS');
         $senderName = env('MAIL_FROM_NAME');
-            $event
+        $event
             ->setSummary($title)
             ->setDescription($description)
             ->setOrganizer(new Organizer(
