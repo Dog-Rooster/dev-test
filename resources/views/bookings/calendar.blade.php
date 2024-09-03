@@ -1,10 +1,27 @@
 <x-guest-layout>
+    @php
+        $timezones = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
+    @endphp
+
+@if ($errors->has('time_slot'))
+        <div class="alert alert-danger">
+            {{ $errors->first('time_slot') }}
+        </div>
+    @endif
     <div class="container mx-auto py-8">
         @if (!request('booking_time'))
             <h1 class="text-2xl font-bold mb-6">Select a Time Slot for {{ $event->name }}</h1>
 
             <div class="mb-4">
                 <form action="{{ route('bookings.create', $event->id) }}" method="GET">
+                    <label for="timezone" class="block font-medium text-gray-700 mt-4">Select Time Zone:</label>
+                    <select name="timezone" id="timezone" class="border rounded p-2">
+                        @foreach ($timezones as $timezone)
+                            <option value="{{ $timezone }}" {{ $timezone === 'UTC' ? 'selected' : '' }}>
+                                {{ $timezone }}
+                            </option>
+                        @endforeach
+                    </select>
                     <label for="booking_date" class="block font-medium text-gray-700">Select Date:</label>
                     <input type="date" name="booking_date" id="booking_date" class="border rounded p-2"
                         value="{{ $selectedDate }}" required>
