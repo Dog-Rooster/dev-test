@@ -98,18 +98,6 @@ class BookingRepository implements BookingRepositoryInterface
 
                     $booking->save();
 
-                    // Generate ICS file
-                    [$icsContent, $icsFileName] = $this->icsGeneratorService->generateIcsFile(
-                        $title,
-                        $description,
-                        $startDateTimeStr,
-                        $endDateTimeStr,
-                        $timezone
-                    );
-
-                    // Send confirmation email with ICS attachment
-                    Mail::to($attendeeEmail)->send(new EventConfirmationMail($icsContent, $icsFileName));
-
                     return collect([
                         'result' => true,
                         'message' => 'Booking event Successfully',
