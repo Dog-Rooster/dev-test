@@ -57,7 +57,6 @@ Route::get('/test-reminder-email', function () {
         $booking->notification_sent = true;
         $booking->save();
     }
-    $this->info("{$now} : {$bookings->count()} Event reminders sent.");
     return "{$now} : {$bookings->count()} Event reminders sent.";
 });
 
