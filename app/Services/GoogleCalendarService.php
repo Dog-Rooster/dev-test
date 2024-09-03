@@ -20,7 +20,8 @@ class GoogleCalendarService
     {
         Log::info('GoogleCalendarService constructor');
         $this->client = new Google_Client();
-        $jsonConfig = env('GOOGLE_SERVICE_ACCOUNT_JSON');
+        $base64Config = env('GOOGLE_SERVICE_ACCOUNT_BASE64');
+        $jsonConfig = base64_decode($base64Config);
         $this->client->setAuthConfig(json_decode($jsonConfig, true));
         $this->client->setScopes(Google_Service_Calendar::CALENDAR);
         $this->service = new Google_Service_Calendar($this->client);
