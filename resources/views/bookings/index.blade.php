@@ -12,6 +12,7 @@
                             <th class="py-2 px-4 border-b text-left">Event Name</th>
                             <th class="py-2 px-4 border-b text-left">Date</th>
                             <th class="py-2 px-4 border-b text-left">Time</th>
+                            <th class="py-2 px-4 border-b text-left">TimeZone</th>
                             <th class="py-2 px-4 border-b text-left">Email</th>
                             <th class="py-2 px-4 border-b text-left">Actions</th>
                         </tr>
@@ -22,6 +23,7 @@
                                 <td class="py-2 px-4 border-b">{{ $booking->event->name }}</td>
                                 <td class="py-2 px-4 border-b">{{ $booking->booking_date }}</td>
                                 <td class="py-2 px-4 border-b">{{ $booking->booking_time }}</td>
+                                <td class="py-2 px-4 border-b">{{ $booking->timezone }}</td>
                                 <td class="py-2 px-4 border-b">{{ $booking->attendee_email }}</td>
                                 <td class="py-2 px-4 border-b">
                                 </td>

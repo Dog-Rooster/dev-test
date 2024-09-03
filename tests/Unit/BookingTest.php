@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 use App\Models\Booking;
 use App\Models\Event;
