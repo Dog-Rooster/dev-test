@@ -2,7 +2,11 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Mail\TestEmail;
+use App\Models\Booking;
+use App\Notifications\EventReminderNotification;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BookingController;
@@ -36,9 +40,25 @@ Route::get('/bookings', [BookingController::class, 'index'])->name('bookings');
 Route::get('/events/{event}/calendar', [BookingController::class, 'create'])->name('bookings.create');
 Route::post('/events/{event}/book', [BookingController::class, 'store'])->name('bookings.store');
 
-Route::get('/test-email', function () {
-    Mail::to('raj90@rich.com')->send(new TestEmail());
-    return 'Email sent!';
+Route::get('/test-reminder-email', function () {
+    $now = Carbon::now('UTC');
+    $oneHourLater = $now->copy()->addHour();
+
+    $bookings = Booking::with('event')
+        ->where('notification_sent', false)
+        ->whereBetween('start_datetime', [$now, $oneHourLater])
+        ->get();
+
+    foreach ($bookings as $booking) {
+        // Assuming 'attendee_email' is the column storing the attendee's email address
+        Notification::route('mail', $booking->attendee_email)
+            ->notify(new EventReminderNotification($booking));
+        // Mark the event as notified
+        $booking->notification_sent = true;
+        $booking->save();
+    }
+    $this->info("{$now} : {$bookings->count()} Event reminders sent.");
+    return "{$now} : {$bookings->count()} Event reminders sent.";
 });
 
 require __DIR__ . '/auth.php';
