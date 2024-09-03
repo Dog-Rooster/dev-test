@@ -14,13 +14,6 @@ class GoogleSocialiteController extends Controller
 {
     public function redirectToGoogle()
     {
-//        $client = Socialite::driver('google')->stateless()->getOAuthProvider();
-//        $client->setScopes(['https://www.googleapis.com/auth/calendar']);
-//        $authUrl = $client->createAuthUrl();
-//        return redirect()->to($authUrl);
-        // redirect user to "login with Google account" page
-     //   return Socialite::driver('google')->scopes(['https://www.googleapis.com/auth/calendar.readonly'])->redirect();
-
         return Socialite::driver('google')->scopes(['https://www.googleapis.com/auth/calendar'])->redirect();
     }
 

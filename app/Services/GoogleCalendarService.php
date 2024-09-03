@@ -20,7 +20,8 @@ class GoogleCalendarService
     {
         Log::info('GoogleCalendarService constructor');
         $this->client = new Google_Client();
-        $this->client->setAuthConfig(base_path('app/Cred/google-calendar-service.json'));
+        $jsonConfig = env('GOOGLE_SERVICE_ACCOUNT_JSON');
+        $this->client->setAuthConfig(json_decode($jsonConfig, true));
         $this->client->setScopes(Google_Service_Calendar::CALENDAR);
         $this->service = new Google_Service_Calendar($this->client);
         $this->calendarId = '87e18b0d75e7febd26eabe83872ce297da644e91dc62421ef7f4937c816db868@group.calendar.google.com';
