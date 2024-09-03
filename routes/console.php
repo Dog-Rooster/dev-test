@@ -11,5 +11,6 @@ Artisan::command('inspire', function () {
 
 
 Schedule::command(SendEventReminders::class)
-    ->everyFiveMinutes()
+//    ->everyFiveMinutes()
+    ->everyMinute()
     ->appendOutputTo('storage/logs/schedule.log');;
