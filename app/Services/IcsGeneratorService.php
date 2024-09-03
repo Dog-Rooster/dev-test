@@ -19,8 +19,8 @@ class IcsGeneratorService
     public function generateIcsFile($title, $description, $startDateTimeStr, $endDateTimeStr, $timezone)
     {
         $event = new Event();
-        $senderEmail = env('MAIL_FROM_ADDRESS');
-        $senderName = env('MAIL_FROM_NAME');
+        $senderEmail = env('MAIL_FROM_ADDRESS', 'test@example.com');
+        $senderName = env('MAIL_FROM_NAME', 'Test');
         $event
             ->setSummary($title)
             ->setDescription($description)

@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Services\IcsGeneratorService;
 use DateTime;
 use DateTimeZone;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class BookingObserver

@@ -83,9 +83,9 @@ class BookingRepository implements BookingRepositoryInterface
             if ($overlapBooking == null){
                 // No collison detected, you can book new event.
                 $descriptionGoogleCalendar = $description.' with '.$attendeeName . ' (' . $attendeeEmail.')';
-                $googleevents = $this->googleCalendarService->createEvent($title, $descriptionGoogleCalendar, $duration, $attendeeName, $attendeeEmail, $startDateTimeStr, $endDateTimeStr, $timezone);
+                $googleCalendarEventCreated = $this->googleCalendarService->createEvent($title, $descriptionGoogleCalendar, $duration, $attendeeName, $attendeeEmail, $startDateTimeStr, $endDateTimeStr, $timezone);
 
-                if ($googleevents->getId()){
+                if ($googleCalendarEventCreated){
                     $booking = new Booking();
                     $booking->attendee_name = $attendeeName;
                     $booking->attendee_email = $attendeeEmail;

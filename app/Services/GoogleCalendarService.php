@@ -15,12 +15,12 @@ class GoogleCalendarService
     public function __construct()
     {
         $this->client = new Google_Client();
-        $base64Config = env('GOOGLE_SERVICE_ACCOUNT_BASE64');
+        $base64Config = env('GOOGLE_SERVICE_ACCOUNT_BASE64', '');
         $jsonConfig = base64_decode($base64Config);
         $this->client->setAuthConfig(json_decode($jsonConfig, true));
         $this->client->setScopes(Google_Service_Calendar::CALENDAR);
         $this->service = new Google_Service_Calendar($this->client);
-        $this->calendarId = env('GOOGLE_CALENDAR_ID');
+        $this->calendarId = env('GOOGLE_CALENDAR_ID', '');
     }
 
     public function getClient()
@@ -42,7 +42,7 @@ class GoogleCalendarService
     /**
      * @throws Exception
      */
-    public function createEvent($title, $description, $duration, $attendeeName, $attendeeEmail, $startDateTimeStr, $endDateTimeStr, $timezone): \Google\Service\Calendar\Event
+    public function createEvent($title, $description, $duration, $attendeeName, $attendeeEmail, $startDateTimeStr, $endDateTimeStr, $timezone): bool
     {
         $calenderEvent = new Google_Service_Calendar_Event([
             'summary' => $title,
@@ -56,6 +56,10 @@ class GoogleCalendarService
                 'timeZone' => $timezone,
             ],
         ]);
-        return $this->service->events->insert($this->calendarId, $calenderEvent);
+        $event = $this->service->events->insert($this->calendarId, $calenderEvent);
+        if ($event->getId())
+            return true;
+        else
+            return false;
     }
 }
