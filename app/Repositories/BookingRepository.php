@@ -57,7 +57,6 @@ class BookingRepository implements BookingRepositoryInterface
         $startDateTimeStrUTC = $startDateTimeUTC->format('Y-m-d H:i:s');
         $endDateTimeStrUTC = $endDateTimeUTC->format('Y-m-d H:i:s');
 
-        //TODO check collision
         $overlapBooking = $this->findOverlappingBooking($attendeeEmail, $startDateTimeStrUTC, $endDateTimeStrUTC);
         if($overlapBooking == null){
             // No collison detected, you can book new event.

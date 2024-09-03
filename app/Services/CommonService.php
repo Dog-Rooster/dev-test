@@ -9,7 +9,7 @@ class CommonService
 {
     public function generateTimeSlots($date, $timezone = 'America/New_York', $startHour = 8, $endHour = 17, $interval = 30)
     {
-        $edTimezone = 'America/New_York';
+        $edTimezone = 'EDT';
         $localTz = new CarbonTimeZone($timezone);
         $edTz = new CarbonTimeZone($edTimezone);
         $datetimeLocal = Carbon::parse($date, $localTz);
