@@ -18,6 +18,7 @@ class AppServiceProvider extends ServiceProvider
             $client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
             $client->setRedirectUri(env('GOOGLE_REDIRECT_URI'));
             $client->addScope(Google_Service_Calendar::CALENDAR);
+
             return $client;
         });
     }

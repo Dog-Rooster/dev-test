@@ -2,22 +2,24 @@
     @php
         $timezones = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
     @endphp
-
-@if ($errors->has('time_slot'))
+    @if ($errors->any())
         <div class="alert alert-danger">
-            {{ $errors->first('time_slot') }}
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
     @endif
     <div class="container mx-auto py-8">
         @if (!request('booking_time'))
             <h1 class="text-2xl font-bold mb-6">Select a Time Slot for {{ $event->name }}</h1>
-
             <div class="mb-4">
-                <form action="{{ route('bookings.create', $event->id) }}" method="GET">
+                <form id="timezone-form"action="{{ route('bookings.create', $event->id) }}" method="GET">
                     <label for="timezone" class="block font-medium text-gray-700 mt-4">Select Time Zone:</label>
-                    <select name="timezone" id="timezone" class="border rounded p-2">
+                    <select name="timezone" id="timezone" class="border rounded p-2" onchange="document.getElementById('timezone-form').submit()">
                         @foreach ($timezones as $timezone)
-                            <option value="{{ $timezone }}" {{ $timezone === 'UTC' ? 'selected' : '' }}>
+                            <option value="{{ $timezone }}" {{ $timezone === request('timezone', 'UTC') ? 'selected' : '' }}>
                                 {{ $timezone }}
                             </option>
                         @endforeach
@@ -36,6 +38,7 @@
                         <form action="{{ route('bookings.create', $event->id) }}" method="GET" class="mt-2">
                             <input type="hidden" name="booking_date" value="{{ $selectedDate }}">
                             <input type="hidden" name="booking_time" value="{{ $time['time'] }}">
+                            <input type="hidden" name="timezone" value="{{ request('timezone') }}">
                             <button type="submit"
                                 class="w-full px-4 py-2 bg-blue-600 text-white rounded">Select</button>
                         </form>
@@ -50,9 +53,10 @@
                     <p><strong>Event:</strong> {{ $event->name }}</p>
                     <p><strong>Date:</strong> {{ request('booking_date') }}</p>
                     <p><strong>Time:</strong> {{ request('booking_time') }}</p>
+                    <p><strong>TimeZone:</strong> {{ request('timezone') }}</p>
                     <input type="hidden" name="booking_date" value="{{ request('booking_date') }}">
                     <input type="hidden" name="booking_time" value="{{ request('booking_time') }}">
-
+                    <input type="hidden" name="timezone" value="{{request('timezone') }}">
                     <label for="attendee_name">Name:</label>
                     <input type="text" name="attendee_name" id="attendee_name" required>
 

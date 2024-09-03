@@ -13,6 +13,9 @@ class BookingController extends Controller
 {
     protected $googleClient;
 
+    /**
+     * @param GoogleClient $googleClient
+     */
     public function __construct(GoogleClient $googleClient)
     {
         $this->googleClient = $googleClient;
@@ -29,6 +32,7 @@ class BookingController extends Controller
                 session(['google_token' => $this->googleClient->getAccessToken()]);
             }
         }
+
     }
     public function index()
     {
@@ -43,14 +47,18 @@ class BookingController extends Controller
             $event = Event::findOrFail($eventId);
 
             // Handle Timezone
-            $userTimeZone = $request->input('timezone', 'UTC');
+            $userTimeZone = $request->input('timezone');
             $bookingDateTime = Carbon::parse($request->input('booking_date') . ' ' . $request->input('booking_time'), $userTimeZone)
                                      ->setTimezone('UTC');
-
             // Collision Detection
             if ($this->isTimeSlotTaken($eventId, $bookingDateTime)) {
-
                 return back()->withErrors(['time_slot' => 'This time slot is already taken. Please choose another.']);
+            }
+
+            // Check if the time slot is in the past
+            if ($bookingDateTime->isPast()) {
+                return redirect()->route('bookings.create', ['event' => $eventId])
+                                 ->withErrors(['time_slot' => 'The selected time slot is already in the past. Please choose a future time slot.']);
             }
 
             $booking = new Booking();
@@ -59,14 +67,17 @@ class BookingController extends Controller
             $booking->event_id = $eventId;
             $booking->booking_date = $bookingDateTime->toDateString();
             $booking->booking_time = $bookingDateTime->toTimeString();
-            $booking->save();
+
 
             // Add to Google Calendar
             $this->addBookingToGoogleCalendar($booking, $event, $userTimeZone);
 
+            $booking->save();
+
             return view('bookings.thank-you', ['booking' => $booking]);
+
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'An error occurred. Please try again.']);
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
@@ -79,8 +90,6 @@ class BookingController extends Controller
                       ->exists();
     }
     private function addBookingToGoogleCalendar(Booking $booking, Event $event, $userTimeZone) {
-
-
 
         $service = new GoogleCalendar($this->googleClient);
 
@@ -96,6 +105,7 @@ class BookingController extends Controller
                 'timeZone' => $userTimeZone,
             ],
         ]);
+
 
         $service->events->insert('primary', $googleEvent);
     }
