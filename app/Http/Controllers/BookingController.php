@@ -10,6 +10,7 @@ use App\Repositories\Interfaces\EventRepositoryInterface;
 use App\Services\BookingService;
 use App\Services\CommonService;
 use App\Services\IcsGeneratorService;
+use App\Strategies\DatabaseConflictResolution;
 use Carbon\Carbon;
 use Carbon\CarbonTimeZone;
 use DateTime;
@@ -35,6 +36,10 @@ class BookingController extends Controller
         $this->bookingRepository = $bookingRepository;
         $this->eventRepository = $eventRepository;
 
+        // TODO
+        // We choose DatabaseConflictResolution because it should be efficient.
+        $conflictResolutionStrategy = new DatabaseConflictResolution();
+        $this->bookingRepository->setConflictResolutionStrategy($conflictResolutionStrategy);
     }
 
     public function index()

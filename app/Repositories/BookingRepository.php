@@ -9,19 +9,21 @@ use App\Repositories\Interfaces\BookingRepositoryInterface;
 use App\Services\CommonService;
 use App\Services\GoogleCalendarService;
 use App\Services\IcsGeneratorService;
+use App\Strategies\Interfaces\EventConflictResolutionStrategyInterface;
 use Carbon\Carbon;
 use DateTime;
 use DateTimeZone;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class BookingRepository implements BookingRepositoryInterface
 {
-    protected $googleCalendarService;
-    protected $icsGeneratorService;
-    protected $commonService;
-
+    protected GoogleCalendarService $googleCalendarService;
+    protected IcsGeneratorService $icsGeneratorService;
+    protected CommonService $commonService;
+    protected EventConflictResolutionStrategyInterface $conflictResolutionStrategy;
 
     public function __construct(
         GoogleCalendarService $googleCalendarService,
@@ -33,13 +35,18 @@ class BookingRepository implements BookingRepositoryInterface
         $this->icsGeneratorService = $icsGeneratorService;
         $this->commonService = $commonService;
     }
-    public function all()
+
+    public function setConflictResolutionStrategy($conflictResolutionStrategy): void
     {
-        $bookings = Booking::with('event')->get();
-        return $bookings;
+        $this->conflictResolutionStrategy = $conflictResolutionStrategy;
+    }
+    public function all(): Collection
+    {
+        return Booking::with('event')->get();
     }
 
-    public function bookEvent(Request $request, Event $event){
+    public function bookEvent(Request $request, Event $event): \Illuminate\Support\Collection
+    {
         $title = $event->name;
         $description = $event->description;
         $duration = $event->duration;
@@ -63,9 +70,17 @@ class BookingRepository implements BookingRepositoryInterface
         $startDateTimeStrUTC = $startDateTimeUTC->format('Y-m-d H:i:s');
         $endDateTimeStrUTC = $endDateTimeUTC->format('Y-m-d H:i:s');
 
+        //Check weekend and work hour
         $bookIsOnWorkDay = $this->commonService->isOnWorkDay(Carbon::parse($startDateTime));
         if ($bookIsOnWorkDay){
-            $overlapBooking = $this->findOverlappingBooking($attendeeEmail, $startDateTimeStrUTC, $endDateTimeStrUTC);
+            // Check event conflict
+            $eventData = [
+                'email' => $attendeeEmail,
+                'startTime' => $startDateTimeStrUTC,
+                'endTime' => $endDateTimeStrUTC
+            ];
+            $overlapBooking = $this->conflictResolutionStrategy->resolveConflict($eventData);
+
             if ($overlapBooking == null){
                 // No collison detected, you can book new event.
                 $descriptionGoogleCalendar = $description.' with '.$attendeeName . ' (' . $attendeeEmail.')';
@@ -126,26 +141,5 @@ class BookingRepository implements BookingRepositoryInterface
                 'message' => "Booking datetime is restricted. (Name: {$event->name}, Description: {$event->description}, Date: {$bookingDate}, {$bookingTime}, Duration: {$event->duration}m ,TimeZone:{$timezone})",
             ]);
         }
-
-    }
-
-    private function findOverlappingBooking($email, $startTime, $endTime) {
-        $overlappingBooking = Booking::where('attendee_email', $email)
-            ->where(function ($query) use ($startTime, $endTime) {
-                $query->where(function ($subQuery) use ($startTime, $endTime) {
-                    $subQuery->where('start_datetime', '<=', $startTime)
-                        ->where('end_datetime', '>=', $endTime);
-                })
-                ->orWhere(function ($subQuery) use ($startTime, $endTime) {
-                    $subQuery->where('end_datetime', '<=', $endTime)
-                        ->where('end_datetime', '>', $startTime);
-                })
-                ->orWhere(function ($subQuery) use ($startTime, $endTime) {
-                    $subQuery->where('start_datetime', '>=',$startTime)
-                        ->where('start_datetime', '<', $endTime);
-                });
-            })
-            ->first();
-        return $overlappingBooking;
     }
 }
