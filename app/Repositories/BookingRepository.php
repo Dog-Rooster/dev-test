@@ -6,8 +6,10 @@ use App\Mail\EventConfirmationMail;
 use App\Models\Booking;
 use App\Models\Event;
 use App\Repositories\Interfaces\BookingRepositoryInterface;
+use App\Services\CommonService;
 use App\Services\GoogleCalendarService;
 use App\Services\IcsGeneratorService;
+use Carbon\Carbon;
 use DateTime;
 use DateTimeZone;
 use Illuminate\Http\Request;
@@ -18,14 +20,18 @@ class BookingRepository implements BookingRepositoryInterface
 {
     protected $googleCalendarService;
     protected $icsGeneratorService;
+    protected $commonService;
+
 
     public function __construct(
         GoogleCalendarService $googleCalendarService,
         IcsGeneratorService $icsGeneratorService,
+        CommonService $commonService,
     )
     {
         $this->googleCalendarService = $googleCalendarService;
         $this->icsGeneratorService = $icsGeneratorService;
+        $this->commonService = $commonService;
     }
     public function all()
     {
@@ -57,60 +63,70 @@ class BookingRepository implements BookingRepositoryInterface
         $startDateTimeStrUTC = $startDateTimeUTC->format('Y-m-d H:i:s');
         $endDateTimeStrUTC = $endDateTimeUTC->format('Y-m-d H:i:s');
 
-        $overlapBooking = $this->findOverlappingBooking($attendeeEmail, $startDateTimeStrUTC, $endDateTimeStrUTC);
-        if($overlapBooking == null){
-            // No collison detected, you can book new event.
-            $descriptionGoogleCalendar = $description.' with '.$attendeeName . ' (' . $attendeeEmail.')';
-            $googleevents = $this->googleCalendarService->createEvent($title, $descriptionGoogleCalendar, $duration, $attendeeName, $attendeeEmail, $startDateTimeStr, $endDateTimeStr, $timezone);
+        $bookIsOnWorkDay = $this->commonService->isOnWorkDay(Carbon::parse($startDateTime));
+        if ($bookIsOnWorkDay){
+            $overlapBooking = $this->findOverlappingBooking($attendeeEmail, $startDateTimeStrUTC, $endDateTimeStrUTC);
+            if ($overlapBooking == null){
+                // No collison detected, you can book new event.
+                $descriptionGoogleCalendar = $description.' with '.$attendeeName . ' (' . $attendeeEmail.')';
+                $googleevents = $this->googleCalendarService->createEvent($title, $descriptionGoogleCalendar, $duration, $attendeeName, $attendeeEmail, $startDateTimeStr, $endDateTimeStr, $timezone);
 
-            Log::Info($googleevents->getId());
-            if($googleevents->getId()){
-                $booking = new Booking();
-                $booking->attendee_name = $attendeeName;
-                $booking->attendee_email = $attendeeEmail;
-                $booking->event_id = $event->id;
-                $booking->booking_date = $bookingDate;
-                $booking->booking_time = $bookingTime;
-                $booking->timezone = $timezone;
-                $booking->start_datetime = $startDateTimeStrUTC;
-                $booking->end_datetime = $endDateTimeStrUTC;
+                if ($googleevents->getId()){
+                    $booking = new Booking();
+                    $booking->attendee_name = $attendeeName;
+                    $booking->attendee_email = $attendeeEmail;
+                    $booking->event_id = $event->id;
+                    $booking->booking_date = $bookingDate;
+                    $booking->booking_time = $bookingTime;
+                    $booking->timezone = $timezone;
+                    $booking->start_datetime = $startDateTimeStrUTC;
+                    $booking->end_datetime = $endDateTimeStrUTC;
 
-                $booking->save();
+                    $booking->save();
 
-                // Generate ICS file
-                [$icsContent, $icsFileName] = $this->icsGeneratorService->generateIcsFile(
-                    $title,
-                    $description,
-                    $startDateTimeStr,
-                    $endDateTimeStr,
-                    $timezone
-                );
+                    // Generate ICS file
+                    [$icsContent, $icsFileName] = $this->icsGeneratorService->generateIcsFile(
+                        $title,
+                        $description,
+                        $startDateTimeStr,
+                        $endDateTimeStr,
+                        $timezone
+                    );
 
-                // Send confirmation email with ICS attachment
-                Mail::to($attendeeEmail)->send(new EventConfirmationMail($icsContent, $icsFileName));
+                    // Send confirmation email with ICS attachment
+                    Mail::to($attendeeEmail)->send(new EventConfirmationMail($icsContent, $icsFileName));
 
-                return collect([
-                    'result' => true,
-                    'message' => 'Booking event Successfully',
-                    'booking' => $booking,
-                ]);
+                    return collect([
+                        'result' => true,
+                        'message' => 'Booking event Successfully',
+                        'booking' => $booking,
+                    ]);
+                }
+                else {
+                    return collect([
+                        'result' => false,
+                        'message' => 'Google Calendar Event Failed',
+                    ]);
+                }
             }
             else {
+                // Collison detected, $overlapBooking is the old booking record.
+                $eventId = $overlapBooking->event_id;
+                $event = Event::findOrFail($eventId);
                 return collect([
                     'result' => false,
-                    'message' => 'Google Calendar Event Failed',
+                    'message' => "Collision detected with old Booking (Name: {$event->name}, Description: {$event->description}, Date: {$overlapBooking->booking_date}, {$overlapBooking->booking_time}, Duration: {$event->duration}m ,TimeZone:{$overlapBooking->timezone})",
                 ]);
             }
         }
         else {
-            // Collison detected, $overlapBooking is the old booking record.
-            $eventId = $overlapBooking->event_id;
-            $event = Event::findOrFail($eventId);
+            // book datetime is restricted.
             return collect([
                 'result' => false,
-                'message' => "Collision detected with Name: {$event->name} Description: {$event->description} Date: {$overlapBooking->booking_date} {$overlapBooking->booking_time} Duration:{$event->duration}m TimeZone:{$overlapBooking->timezone}",
+                'message' => "Booking datetime is restricted. (Name: {$event->name}, Description: {$event->description}, Date: {$bookingDate}, {$bookingTime}, Duration: {$event->duration}m ,TimeZone:{$timezone})",
             ]);
         }
+
     }
 
     private function findOverlappingBooking($email, $startTime, $endTime) {

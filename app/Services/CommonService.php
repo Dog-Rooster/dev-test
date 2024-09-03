@@ -4,14 +4,35 @@ namespace App\Services;
 
 use Carbon\Carbon;
 use Carbon\CarbonTimeZone;
+use Illuminate\Support\Facades\Log;
 
 class CommonService
 {
+    public function isOnWorkDay($datetimeLocal, $startWorkHour = 8, $endWorkHour = 17, $onlyWeekDay = true){
+        $edTimezone = 'EDT';
+        $edTz = new CarbonTimeZone($edTimezone);
+        $datetimeInEdt = $datetimeLocal->copy()->setTimezone($edTz);
+        if (!($onlyWeekDay && $datetimeInEdt->isWeekend())) {
+            // Define working hours in EDT timezone
+            $startOfWorkdayEDT = $datetimeInEdt->copy()->startOfDay()->setHour($startWorkHour);
+            $endOfWorkdayEDT = $datetimeInEdt->copy()->startOfDay()->setHour($endWorkHour);
+
+            $isInTimeRange = $datetimeInEdt->between($startOfWorkdayEDT, $endOfWorkdayEDT);
+//            Log::info("{$datetimeLocal} {$datetimeInEdt} {$isInTimeRange}");
+            if($isInTimeRange){
+                return true;
+            }
+            else{
+                return false;
+            }
+        }
+        else{
+            return false;
+        }
+    }
     public function generateTimeSlots($date, $timezone = 'America/New_York', $startHour = 8, $endHour = 17, $interval = 30)
     {
-        $edTimezone = 'EDT';
         $localTz = new CarbonTimeZone($timezone);
-        $edTz = new CarbonTimeZone($edTimezone);
         $datetimeLocal = Carbon::parse($date, $localTz);
 
         $startOfDay = $datetimeLocal->startOfDay();
@@ -19,19 +40,10 @@ class CommonService
 
         $timeSlots = [];
         while ($startOfDay < $endOfDay) {
-            // Convert datetime to EDT
-            $datetimeInEdt = $startOfDay->copy()->setTimezone($edTz);
-            if (!$datetimeInEdt->isWeekend()) {
-                // Define working hours in EDT timezone
-                $startOfWorkdayEDT = $datetimeInEdt->copy()->startOfDay()->setHour($startHour);
-                $endOfWorkdayEDT = $datetimeInEdt->copy()->startOfDay()->setHour($endHour);
-
-                $isInTimeRange = $datetimeInEdt->between($startOfWorkdayEDT, $endOfWorkdayEDT);
-                if($isInTimeRange){
-                    $timeSlots[] = [
-                        'time' => $startOfDay->format('H:i'),
-                    ];
-                }
+            if ($this->isOnWorkDay($startOfDay)) {
+                $timeSlots[] = [
+                    'time' => $startOfDay->format('H:i'),
+                ];
             }
             $startOfDay = $startOfDay->addMinutes($interval);
         }

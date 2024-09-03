@@ -3,9 +3,6 @@
         <div class="bg-white p-8 max-w-lg w-full">
             <h1 class="text-3xl font-bold mb-4 text-center text-red-600">Failed!</h1>
             <p class="text-lg mb-4 text-gray-700 text-center">
-                Your booking has been failed.
-            </p>
-            <p class="text-lg mb-4 text-gray-700 text-center">
                 {{$errorMessage}}
             </p>
             <div class="text-center">
