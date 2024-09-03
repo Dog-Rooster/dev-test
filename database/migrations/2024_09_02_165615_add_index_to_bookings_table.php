@@ -12,9 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            $table->index(['start_time']);
-            $table->index('end_time');
-            $table->index('attendee_email');
+            $table->index('start_datetime');
+            $table->index('end_datetime');
             $table->index(['start_datetime', 'end_datetime']);
         });
     }
@@ -25,9 +24,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            $table->dropIndex(['start_time']);
-            $table->dropIndex(['end_time']);
-            $table->dropIndex(['attendee_email']);
+            $table->dropIndex(['start_datetime']);
+            $table->dropIndex(['end_datetime']);
             $table->dropIndex(['start_datetime', 'end_datetime']);
         });
     }
