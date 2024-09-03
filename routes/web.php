@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Mail\TestEmail;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BookingController;
@@ -34,6 +36,9 @@ Route::get('/bookings', [BookingController::class, 'index'])->name('bookings');
 Route::get('/events/{event}/calendar', [BookingController::class, 'create'])->name('bookings.create');
 Route::post('/events/{event}/book', [BookingController::class, 'store'])->name('bookings.store');
 
-
+Route::get('/test-email', function () {
+    Mail::to('raj90@rich.com')->send(new TestEmail());
+    return 'Email sent!';
+});
 
 require __DIR__ . '/auth.php';
