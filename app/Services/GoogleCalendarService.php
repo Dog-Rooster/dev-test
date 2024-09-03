@@ -2,14 +2,10 @@
 
 namespace App\Services;
 
-use DateTime;
-use DateTimeZone;
 use Google\Service\Exception;
 use Google_Client;
 use Google_Service_Calendar;
 use Google_Service_Calendar_Event;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
 
 class GoogleCalendarService
 {

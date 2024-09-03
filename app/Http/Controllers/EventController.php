@@ -3,10 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
-use Illuminate\Http\Request;
 use App\Services\GoogleCalendarService;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Log;
+
 
 class EventController extends Controller
 {

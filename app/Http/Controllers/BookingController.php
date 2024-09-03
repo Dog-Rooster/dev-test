@@ -2,23 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\EventConfirmationMail;
-use App\Models\Booking;
-use App\Models\Event;
 use App\Repositories\Interfaces\BookingRepositoryInterface;
 use App\Repositories\Interfaces\EventRepositoryInterface;
-use App\Services\BookingService;
 use App\Services\CommonService;
-use App\Services\IcsGeneratorService;
 use App\Strategies\DatabaseConflictResolution;
-use Carbon\Carbon;
-use Carbon\CarbonTimeZone;
-use DateTime;
-use DateTimeZone;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
-use App\Services\GoogleCalendarService;
-use Illuminate\Support\Facades\Mail;
 
 class BookingController extends Controller
 {

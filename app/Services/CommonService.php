@@ -4,7 +4,6 @@ namespace App\Services;
 
 use Carbon\Carbon;
 use Carbon\CarbonTimeZone;
-use Illuminate\Support\Facades\Log;
 
 class CommonService
 {

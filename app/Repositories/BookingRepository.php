@@ -15,7 +15,6 @@ use DateTime;
 use DateTimeZone;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class BookingRepository implements BookingRepositoryInterface
