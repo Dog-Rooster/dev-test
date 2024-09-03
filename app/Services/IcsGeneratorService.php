@@ -4,6 +4,7 @@ namespace App\Services;
 
 use DateInterval;
 use DateTimeImmutable;
+use DateTimeZone;
 use Eluceo\iCal\Domain\Entity\Calendar;
 use Eluceo\iCal\Domain\Entity\Event;
 use Eluceo\iCal\Domain\ValueObject\Alarm;
@@ -22,20 +23,20 @@ class IcsGeneratorService
 {
     public function generateIcsFile($title, $description, $startDateTimeStr, $endDateTimeStr, $timezone)
     {
-        Log::Info($startDateTimeStr);
-        Log::Info($endDateTimeStr);
         $event = new Event();
-        $event
+        $senderEmail = env('MAIL_FROM_ADDRESS');
+        $senderName = env('MAIL_FROM_NAME');
+            $event
             ->setSummary($title)
             ->setDescription($description)
             ->setOrganizer(new Organizer(
-                new EmailAddress('raj90.rich@gmail.com'),
-                'CalDevAdmin'
+                new EmailAddress($senderEmail),
+                $senderName
             ))
             ->setOccurrence(
                 new TimeSpan(
-                    new DateTime(DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s', $startDateTimeStr), true),
-                    new DateTime(DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s', $endDateTimeStr), true)
+                    new DateTime(DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s', $startDateTimeStr, new DateTimeZone($timezone)), true),
+                    new DateTime(DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s', $endDateTimeStr, new DateTimeZone($timezone)), true)
                 )
             )
             ->addAlarm(
