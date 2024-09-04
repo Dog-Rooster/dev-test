@@ -9,6 +9,9 @@ use Google_Service_Calendar_Event;
 use Illuminate\Http\Request;
 use Google\Client as GoogleClient;
 use Google\Service\Calendar as GoogleCalendar;
+use Illuminate\Support\Facades\Mail;
+use Spatie\IcalendarGenerator\Components\Calendar;
+use Spatie\IcalendarGenerator\Components\Event as IcsEvent;
 class BookingController extends Controller
 {
     protected $googleClient;
@@ -61,6 +64,18 @@ class BookingController extends Controller
                                  ->withErrors(['time_slot' => 'The selected time slot is already in the past. Please choose a future time slot.']);
             }
 
+            // Restrict to Monday-Friday
+            if ($bookingDateTime->isWeekend()) {
+                return redirect()->route('bookings.create', ['event' => $eventId])
+                                 ->withErrors(['time_slot' => 'Bookings are only allowed Monday through Friday.']);
+            }
+
+            // Restrict to 8am - 5pm
+            if ($bookingDateTime->hour < 8 || $bookingDateTime->hour >= 17) {
+                return redirect()->route('bookings.create', ['event' => $eventId])
+                                 ->withErrors(['time_slot' => 'Bookings are only allowed between 8am and 5pm.']);
+            }
+
             /**
              * Create a new Booking instance and populate its attributes.
              *
@@ -91,7 +106,11 @@ class BookingController extends Controller
             // Add to Google Calendar
             $this->addBookingToGoogleCalendar($booking, $event, $userTimeZone);
 
+            // Send confirmation email
+            $this->sendConfirmationEmail($booking, $event, $userTimeZone);
             $booking->save();
+
+
 
             return view('bookings.thank-you', ['booking' => $booking]);
 
@@ -100,6 +119,34 @@ class BookingController extends Controller
         }
     }
 
+    /**
+     * Send a confirmation email with a .ics file attached.
+     *
+     * @param Booking $booking The booking details.
+     * @param Event $event The event details.
+     * @param string $userTimeZone The time zone of the user.
+     */
+    private function sendConfirmationEmail(Booking $booking, Event $event, $userTimeZone)
+    {
+        $calendar = Calendar::create()
+            ->event(IcsEvent::create($event->name)
+                ->startsAt(Carbon::parse($booking->booking_date . ' ' . $booking->booking_time, $userTimeZone))
+                ->endsAt(Carbon::parse($booking->booking_date . ' ' . $booking->booking_time, $userTimeZone)->addMinutes(30))
+                ->attendee($booking->attendee_email)
+                ->description('Booking for ' . $booking->attendee_name)
+            );
+
+        $icsContent = $calendar->get();
+
+        // Send the email
+        Mail::send('emails.booking-confirmation', ['booking' => $booking, 'userTimeZone' => $userTimeZone], function ($message) use ($booking, $icsContent) {
+            $message->to($booking->attendee_email)
+                    ->subject('Booking Confirmation')
+                    ->attachData($icsContent, 'booking.ics', [
+                        'mime' => 'text/calendar',
+                    ]);
+        });
+    }
 
     /**
      * Checks if a time slot is taken for a specific event.
@@ -173,8 +220,8 @@ class BookingController extends Controller
 
     private function generateTimeSlots($date, $userTimeZone)
     {
-        $startOfDay = Carbon::parse($date, $userTimeZone)->startOfDay();
-        $endOfDay = Carbon::parse($date, $userTimeZone)->endOfDay();
+        $startOfDay = Carbon::parse($date, $userTimeZone)->setTime(8, 0);
+        $endOfDay = Carbon::parse($date, $userTimeZone)->setTime(17, 0);
         $interval = 30; // 30 minutes per time block
 
         $timeSlots = [];
