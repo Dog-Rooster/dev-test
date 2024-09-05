@@ -14,10 +14,11 @@ return new class extends Migration
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
-            $table->text('attendee_name');
-            $table->text('attendee_email');
-            $table->date('booking_date');
-            $table->time('booking_time');
+            $table->string('attendee_name', 128);
+            $table->string('attendee_email', 64);
+            // $table->date('booking_date'); // in UTC format
+            $table->time('booking_time'); // in UTC format
+            // $table->string('original_timezone', 64);
             $table->timestamps();
         });
     }

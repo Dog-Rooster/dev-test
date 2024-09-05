@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\BookingDate;
 use App\Models\Event;
+use App\Models\Timezone;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DateTimeZone;
@@ -19,18 +21,31 @@ class BookingController extends Controller
 
     public function store(Request $request, $eventId)
     {
-        // TODO: Add timezone to booking table; PRIO: 1
         // TODO: Add backend validation for double booking; PRIO: 2
         $bookingTimeslot = Carbon::createFromFormat('Y-m-d H:i', 
             $request->input('booking_date') . ' ' . $request->input('booking_time'), 
-            $request->input('booking_timezone'))->setTimezone('UTC');
+            $request->input('booking_timezone'))
+            ->setTimezone('UTC');
+
+        $bookingDate = new BookingDate();
+        $bookingDateId = $bookingDate->firstOrCreate([
+            'booking_date' => $bookingTimeslot->toDateString()
+        ])->id;
+
+        $timezone = new Timezone();
+        $timezoneId = $timezone->firstOrCreate([
+            'timezone' => $request->input('booking_timezone')
+        ])->id;
 
         $booking = new Booking();
         $booking->attendee_name = $request->input('attendee_name');
         $booking->attendee_email = $request->input('attendee_email');
         $booking->event_id = $eventId;
-        $booking->booking_date = $bookingTimeslot->toDateString();
+        // Save booking date and time in UTC format
+        $booking->booking_date_id = $bookingDateId;
         $booking->booking_time = $bookingTimeslot->toTimeString();
+        // Save selected timezone
+        $booking->timezone_id = $timezoneId;
         $booking->save();
 
         $booking->booking_date =  $request->input('booking_date');
@@ -57,6 +72,7 @@ class BookingController extends Controller
         $endOfDay = Carbon::parse($date)->startOfDay()->addHours(24);
         $interval = $event->duration;
         $bookings = Booking::select('booking_date', 'booking_time')
+            ->join('booking_dates', 'bookings.booking_date_id', '=', 'booking_dates.id')
             ->whereBetween('booking_date', [Carbon::parse($date)->subHours(24), Carbon::parse($date)->addHours(24)])
             ->get()
             ->all();
