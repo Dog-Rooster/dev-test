@@ -33,8 +33,8 @@
                             <input type="hidden" name="booking_timezone" value="{{ $selectedTimezone }}">
                             <input type="hidden" name="booking_time" value="{{ $time['time'] }}">
                             <button type="submit"
-                                class="w-full px-4 py-2 rounded bg-blue-600 text-white {{ ($time['booked']) ? 'opacity-50 cursor-not-allowed' : '' }}" 
-                                {{ ($time['booked']) ? 'disabled' : '' }}>Select</button>
+                                class="w-full px-4 py-2 rounded bg-blue-600 text-white {{ ($time['booked'] || $time['past']) ? 'opacity-50 cursor-not-allowed' : '' }}" 
+                                {{ ($time['booked'] || $time['past']) ? 'disabled' : '' }}>Select</button>
                         </form>
                     </div>
                 @endforeach

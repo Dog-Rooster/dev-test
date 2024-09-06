@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Http\Helpers\Google\GoogleCalendarHelper;
 use Google\Client as GoogleClient;
 use DateTimeZone;
+use Date;
 
 class BookingController extends Controller
 {
@@ -115,16 +116,38 @@ class BookingController extends Controller
         while ($startOfDay < $endOfDay) {
             $end = $startOfDay->copy()->addMinutes($interval);
 
-            $timeSlots[] = [
-                'time' => $startOfDay->format('H:i'),
-                // If time slot is already booked (time slot is in bookedTimeSlots array), 
-                // select button for the time slot will be disabled
-                'booked' => in_array($startOfDay, $bookedTimeSlots)
-            ];
+            // Convert from selected timezone to UTC
+            $utcDate = Carbon::createFromFormat('Y-m-d H:i:s', 
+                $startOfDay, 
+                $timezone)
+            ->setTimezone('UTC');
+
+            // Skip adding time slot if datetime is restricted
+            if ($this->checkIfDateIsRestricted($utcDate)) {
+                $timeSlots[] = [
+                    'time' => $startOfDay->format('H:i'),
+                    // If time slot is already booked (time slot is in bookedTimeSlots array), 
+                    // select button for the time slot will be disabled
+                    'booked' => in_array($startOfDay, $bookedTimeSlots),
+                    // If time slot is already in the past, 
+                    // select button for the time slot will be disabled
+                    'past' => $utcDate->isPast()
+                ];
+            }
 
             $startOfDay = $end;
         }
         
         return $timeSlots;
+    }
+
+    /**
+     * Check if date is a weekday and between 08:00 - 17:00
+     * @param mixed $date
+     * @return bool
+     */
+    private function checkIfDateIsRestricted($date)
+    {
+        return $date->isWeekday() && $date->isBetween(Date::createFromTimeString($date->toDateString() . '08:00'), Date::createFromTimeString($date->toDateString() . '17:00'));
     }
 }
