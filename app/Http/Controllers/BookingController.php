@@ -8,6 +8,8 @@ use App\Models\Event;
 use App\Models\Timezone;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Http\Helpers\Google\GoogleCalendarHelper;
+use Google\Client as GoogleClient;
 use DateTimeZone;
 
 class BookingController extends Controller
@@ -52,6 +54,11 @@ class BookingController extends Controller
         $booking->booking_time = $bookingTimeslot->toTimeString();
 
         $booking->timezone_id = $timezoneId;
+
+        // TODO : Move to jobs; PRIO : 1
+        // Create a new event in Google calendar
+        $calendarHelper = new GoogleCalendarHelper(new GoogleClient);
+        $calendarHelper->createEvent($booking, $bookingTimeslot);
 
         $booking->save();
 
