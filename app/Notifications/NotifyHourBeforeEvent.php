@@ -37,7 +37,6 @@ class NotifyHourBeforeEvent extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         Log::info('Booking notification sent to ' . $this->booking->attendee_email . '. | Booking id : ' . $this->booking->id . '.');
-        // TODO : Implement mailing; PRIO : 1
         return (new MailMessage)
                     ->subject('Event Notification')
                     ->greeting($this->booking->event->name . ' Event Notification')

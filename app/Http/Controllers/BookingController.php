@@ -24,7 +24,7 @@ class BookingController extends Controller
 
     public function store(Request $request, $eventId)
     {
-        // TODO: Add backend validation for double booking; PRIO: 2
+        // TODO : Add backend validation for double booking; PRIO: 2
 
         // Convert selected timeslot to UTC timezone for storing
         $bookingTimeslot = Carbon::createFromFormat('Y-m-d H:i', 
@@ -71,7 +71,7 @@ class BookingController extends Controller
 
     public function create(Request $request, $eventId)
     {
-        // TODO: Move to resource; PRIO: 2
+        // TODO : Move to resource; PRIO: 2
         $event = Event::findOrFail($eventId);
         $selectedDate = $request->input('booking_date', now()->toDateString());
         $selectedTimezone = $request->input('booking_timezone', env('APP_TIMEZONE', 'UTC'));
