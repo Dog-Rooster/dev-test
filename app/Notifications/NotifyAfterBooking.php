@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notification;
 use App\Models\Booking;
 use Illuminate\Support\Facades\Log;
 
-class NotifyHourBeforeEvent extends Notification implements ShouldQueue
+class NotifyAfterBooking extends Notification
 {
     use Queueable;
 
@@ -36,14 +36,15 @@ class NotifyHourBeforeEvent extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        Log::info('Booking notification sent to ' . $this->booking->attendee_email . '. | Booking id : ' . $this->booking->id . '.');
-        // TODO : Implement mailing; PRIO : 1
+        Log::info('Booking confirmation sent to ' . $this->booking->attendee_email . '. | Booking id : ' . $this->booking->id . '.');
+        // TODO : Attach ics file; PRIO : 1
         return (new MailMessage)
-                    ->subject('Event Notification')
-                    ->greeting($this->booking->event->name . ' Event Notification')
+                    ->subject('Event Confirmation')
+                    ->greeting($this->booking->event->name . ' Event Confirmation')
                     ->line('Hello ' . $this->booking->attendee_name . ',')
-                    ->line('This email is to notify you of you upcoming ' . $this->booking->event->name . ' event on ' . $this->bookingSlot . '.')
-                    ->line('Again, thank you and we are looking forward to seeing you!');
+                    ->line('Your booking for ' . $this->booking->event->name . ' on ' . $this->bookingSlot . ' has been confirmed.')
+                    ->line('Please check the attached .ics file.')
+                    ->line('Thank you and we are looking forward to seeing you!');
     }
 
     /**

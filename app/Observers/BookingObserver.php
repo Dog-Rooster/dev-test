@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Notifications\NotifyAfterBooking;
 use App\Notifications\NotifyHourBeforeEvent;
 use Illuminate\Support\Facades\Notification;
 use App\Models\Booking;
@@ -20,11 +21,17 @@ class BookingObserver
         $minutesUntilNotification = (Carbon::now())->diffInMinutes($bookingSlot, true);
         // Add a delay to the booking notification
         if ($minutesUntilNotification > 60) {
-            $delay = $minutesUntilNotification - 60;
+            $delay = ($minutesUntilNotification - 60) * 60;
         }
-        // Notify booking attendee through email
+
+        // Send confirmation email to attendee immediately after booking
         Notification::route('mail', [
             $booking->attendee_email => $booking->attendee_name
-        ])->notify((new NotifyHourBeforeEvent($booking))->delay($delay));
+        ])->notify(new NotifyAfterBooking($booking, $bookingSlot));
+
+        // Send notification email to attendee an hour before booking starts
+        Notification::route('mail', [
+            $booking->attendee_email => $booking->attendee_name
+        ])->notify((new NotifyHourBeforeEvent($booking, $bookingSlot))->delay($delay));
     }
 }
