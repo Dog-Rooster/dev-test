@@ -12,13 +12,16 @@ class GoogleAuthController extends Controller
 
     public function __construct(GoogleClient $googleClient)
     {
+        // Setup Google client
         $this->client = $googleClient;
-        $this->client->setApplicationName(env('APP_NAME'));
-        // TODO : Move auth config to env; PRIO : 2
-        $this->client->setAuthConfig(base_path() . '/storage/google/config.json');
-        $this->client->setAccessType('offline');
-        $this->client->setApprovalPrompt('force');
-        $this->client->setScopes(Google_Service_Calendar::CALENDAR);
+        $this->client->setApplicationName(config('app.name'));
+        $this->client->setClientId(config('services.google.client_id'));
+        $this->client->setClientSecret(config('services.google.client_secret'));
+        $this->client->setRedirectUri(config('services.google.redirect_uri'));
+        $this->client->setScopes(config('services.google.scopes'));
+        $this->client->setApprovalPrompt(config('services.google.approval_prompt'));
+        $this->client->setAccessType(config('services.google.access_type'));
+        $this->client->setIncludeGrantedScopes(config('services.google.include_granted_scopes'));
     }
     
     /**

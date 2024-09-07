@@ -46,7 +46,7 @@ class BookingController extends Controller
         ])->id;
 
         // Set new booking data
-        // TODO : Implement eager loading of relationships; PRIO : 2
+        // TODO : Implement eager loading of relationships in queue; PRIO : 2
         $booking = new Booking();
         $booking->attendee_name = $request->input('attendee_name');
         $booking->attendee_email = $request->input('attendee_email');
@@ -71,7 +71,6 @@ class BookingController extends Controller
 
     public function create(Request $request, $eventId)
     {
-        // TODO : Move to resource; PRIO: 2
         $event = Event::findOrFail($eventId);
         $selectedDate = $request->input('booking_date', now()->toDateString());
         $selectedTimezone = $request->input('booking_timezone', env('APP_TIMEZONE', 'UTC'));
