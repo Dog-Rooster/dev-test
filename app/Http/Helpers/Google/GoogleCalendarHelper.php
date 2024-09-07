@@ -10,9 +10,9 @@ use App\Models\Booking;
 
 class GoogleCalendarHelper extends GoogleBaseHelper
 {
-    public function __construct(GoogleClient $googleClient)
+    public function __construct(GoogleClient $googleClient, $accessToken)
     {
-        parent::__construct($googleClient);
+        parent::__construct($googleClient, $accessToken);
         $this->service = new GoogleCalendar($this->client);
     }
 
