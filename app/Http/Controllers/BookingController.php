@@ -45,6 +45,7 @@ class BookingController extends Controller
         ])->id;
 
         // Set new booking data
+        // TODO : Implement eager loading of relationships; PRIO : 2
         $booking = new Booking();
         $booking->attendee_name = $request->input('attendee_name');
         $booking->attendee_email = $request->input('attendee_email');

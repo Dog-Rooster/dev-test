@@ -34,6 +34,11 @@ class GoogleCalendarHelper extends GoogleBaseHelper
             'end' => [
                 'dateTime' => Carbon::parse($timeSlot)->addMinutes($booking->event->duration)->toIso8601String(),
                 'timeZone' => 'UTC'
+            ],
+            'attendees' => [
+                [
+                    'email' => $booking->attendee_email
+                ]
             ]
         ]);
 
