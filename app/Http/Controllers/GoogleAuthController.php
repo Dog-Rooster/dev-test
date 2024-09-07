@@ -20,13 +20,14 @@ class GoogleAuthController extends Controller
         $this->client->setApprovalPrompt('force');
         $this->client->setScopes(Google_Service_Calendar::CALENDAR);
     }
-
+    
     /**
-     * Creates an auth URL so an Google access token can be generated for the user
+     * Authenticate and retrieve access token for user
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function createAuthUrl()
     {
+        // Creates an auth URL so an Google access token can be generated for the user
         return redirect($this->client->createAuthUrl());
     }
 
@@ -42,7 +43,6 @@ class GoogleAuthController extends Controller
             'google_access_token' => $this->client->fetchAccessTokenWithAuthCode($request->get('code'))
         ]);
 
-        // Redirect to the intedted page
-        return redirect(session('intendedPage'));
+        return redirect(session('intendedRoute'));
     }
 }
