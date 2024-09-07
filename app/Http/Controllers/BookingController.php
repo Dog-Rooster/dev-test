@@ -99,6 +99,7 @@ class BookingController extends Controller
 
         // Get all bookings for a specific event a day before and after the selected data
         $bookings = Booking::select('booking_date', 'booking_time')
+            ->where('event_id', $event->id)
             ->join('booking_dates', 'bookings.booking_date_id', '=', 'booking_dates.id')
             ->whereBetween('booking_date', [Carbon::parse($date)->subHours(24), Carbon::parse($date)->addHours(24)])
             ->get()
