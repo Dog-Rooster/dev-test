@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\GoogleController;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -22,10 +23,19 @@ Route::middleware('auth')->group(function () {
 Route::get('/', [EventController::class, 'index'])->name('events.index');
 
 Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
+Route::get('/events/{event}/create', [BookingController::class, 'create'])->name('bookings.create');
+Route::get('/events/{event}/calendar', [BookingController::class, 'createCalendar'])->name('bookings.createCalendar');
 
-Route::get('/events/{event}/calendar', [BookingController::class, 'create'])->name('bookings.create');
+Route::get('/events/{event}/edit/{id}', [BookingController::class, 'edit'])->name('bookings.edit');
+Route::get('/events/{event}/calendar/{booking}', [BookingController::class, 'editCalendar'])->name('bookings.editCalendar');
+
 Route::post('/events/{event}/book', [BookingController::class, 'store'])->name('bookings.store');
+Route::post('/events/{event}/book/{booking}', [BookingController::class, 'update'])->name('bookings.update');
 
+Route::get('/auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
+Route::get('/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 
+Route::get('/timezones', [BookingController::class, 'generateTimeZones']);
+Route::get('/timeslots', [BookingController::class, 'getTimeSlots']);
 
 require __DIR__ . '/auth.php';
