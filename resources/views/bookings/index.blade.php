@@ -24,6 +24,10 @@
                                 <td class="py-2 px-4 border-b">{{ $booking->booking_time }}</td>
                                 <td class="py-2 px-4 border-b">{{ $booking->attendee_email }}</td>
                                 <td class="py-2 px-4 border-b">
+                                    <!-- Edit button/link -->
+                                    <a href="{{ route('bookings.editCalendar', [$booking->event->id, $booking->id]) }}" class="text-blue-500 hover:underline">
+                                        Edit
+                                    </a>
                                 </td>
                             </tr>
                         @endforeach
