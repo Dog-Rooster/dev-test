@@ -9,8 +9,6 @@ use App\Models\Event;
 use App\Models\Timezone;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Http\Helpers\Google\GoogleCalendarHelper;
-use Google\Client as GoogleClient;
 use App\Jobs\CreateGoogleCalendarEvent;
 use DateTimeZone;
 use Date;

@@ -34,7 +34,7 @@ class CheckGoogleAuth
 
         // Save the intended route to session so auth callback will know where to redirect
         session([
-            'intendedRoute' => $request->fullUrl()
+            'intended_route' => $request->fullUrl()
         ]);
 
         return redirect()->route('google.auth');

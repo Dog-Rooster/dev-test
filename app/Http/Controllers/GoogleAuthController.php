@@ -46,6 +46,6 @@ class GoogleAuthController extends Controller
             'google_access_token' => $this->client->fetchAccessTokenWithAuthCode($request->get('code'))
         ]);
 
-        return redirect(session('intendedRoute'));
+        return redirect(session('intended_route'));
     }
 }

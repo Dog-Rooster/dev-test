@@ -24,7 +24,6 @@ class StoreBookingRequest extends FormRequest
      */
     public function rules(): array
     {
-        // TODO : Add validation if time slot with the same event id already exists; PRIO : 1
         return [
             'event_id' => ['bail', 'required', 'exists:events,id'],
             'attendee_name' => ['bail', 'required', 'max:128'],
