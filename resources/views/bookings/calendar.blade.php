@@ -42,11 +42,12 @@
         @else
             <div class="mt-8 p-4 bg-white border rounded-lg">
                 <h2 class="text-xl font-bold mb-4">Confirm Your Booking</h2>
-                <form action="{{ route('bookings.store', $event->id) }}" method="POST">
+                <form action="{{ route('bookings.store') }}" method="POST">
                     @csrf
                     <p><strong>Event:</strong> {{ $event->name }}</p>
                     <p><strong>Date:</strong> {{ request('booking_date') }}</p>
                     <p><strong>Time:</strong> {{ request('booking_time') }}</p>
+                    <input type="hidden" name="event_id" value="{{ $event->id }}">
                     <input type="hidden" name="booking_date" value="{{ request('booking_date') }}">
                     <input type="hidden" name="booking_time" value="{{ request('booking_time') }}">
                     <input type="hidden" name="booking_timezone" value="{{ request('booking_timezone') }}">

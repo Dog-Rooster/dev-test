@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreBookingRequest;
 use App\Models\Booking;
 use App\Models\BookingDate;
 use App\Models\Event;
@@ -23,10 +24,8 @@ class BookingController extends Controller
         return view('bookings.index', compact('bookings'));
     }
 
-    public function store(Request $request, $eventId)
+    public function store(StoreBookingRequest $request)
     {
-        // TODO : Add backend validation for double booking; PRIO: 2
-
         // Convert selected timeslot to UTC timezone for storing
         $bookingTimeslot = Carbon::createFromFormat('Y-m-d H:i', 
             $request->input('booking_date') . ' ' . $request->input('booking_time'), 
@@ -51,7 +50,7 @@ class BookingController extends Controller
         $booking->attendee_name = $request->input('attendee_name');
         $booking->attendee_email = $request->input('attendee_email');
 
-        $booking->event_id = $eventId;
+        $booking->event_id = $request->input('event_id');
 
         $booking->booking_date_id = $bookingDateId;
         $booking->booking_time = $bookingTimeslot->toTimeString();

@@ -25,7 +25,7 @@ Route::get('/', [EventController::class, 'index'])->name('events.index');
 Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
 
 Route::get('/events/{event}/calendar', [BookingController::class, 'create'])->middleware('google.auth')->name('bookings.create');
-Route::post('/events/{event}/book', [BookingController::class, 'store'])->name('bookings.store');
+Route::post('/events/book', [BookingController::class, 'store'])->name('bookings.store');
 
 Route::get('/google/auth', [GoogleAuthController::class, 'createAuthUrl'])->name('google.auth');
 
