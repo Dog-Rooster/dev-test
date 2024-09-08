@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('events', function (Blueprint $table) {
+        Schema::create('timezones', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 255);
-            $table->integer('duration'); // Duration in minutes
-            $table->text('description')->nullable();
-            $table->timestamps();
+            $table->string('timezone', 64);
+        });
+
+        Schema::table('bookings', function (Blueprint $table) {
+            $table->foreignId('timezone_id')->after('booking_time')->constrained();
         });
     }
 
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('events');
+        Schema::dropIfExists('timezone');
     }
 };
