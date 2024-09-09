@@ -8,6 +8,14 @@ use App\Contracts\BookingRepositoryInterface;
 
 class EloquentBookingRepository implements BookingRepositoryInterface
 {
+    
+    public function index()
+    {
+        $bookings = Booking::with('event')->get();
+
+        return $bookings;
+    }
+    
     public function create(array $data)
     {
         $booking = new Booking();

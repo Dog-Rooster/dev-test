@@ -13,6 +13,11 @@ class BookingService implements BookingServiceInterface
         $this->bookingRepository = $bookingRepository;
     }
 
+    public function getAllBookings()
+    {
+        return $this->bookingRepository->index();
+    }
+
     public function createBooking(array $data)
     {
         return $this->bookingRepository->create($data);

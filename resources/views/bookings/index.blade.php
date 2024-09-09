@@ -13,18 +13,15 @@
                             <th class="py-2 px-4 border-b text-left">Date</th>
                             <th class="py-2 px-4 border-b text-left">Time</th>
                             <th class="py-2 px-4 border-b text-left">Email</th>
-                            <th class="py-2 px-4 border-b text-left">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($bookings as $booking)
                             <tr>
                                 <td class="py-2 px-4 border-b">{{ $booking->event->name }}</td>
-                                <td class="py-2 px-4 border-b">{{ $booking->booking_date }}</td>
-                                <td class="py-2 px-4 border-b">{{ $booking->booking_time }}</td>
+                                <td class="py-2 px-4 border-b">{{ date('F j, Y',strtotime($booking->booking_date)) }}</td>
+                                <td class="py-2 px-4 border-b">{{ date('g:i A',strtotime($booking->booking_time)) }}</td>
                                 <td class="py-2 px-4 border-b">{{ $booking->attendee_email }}</td>
-                                <td class="py-2 px-4 border-b">
-                                </td>
                             </tr>
                         @endforeach
                     </tbody>
