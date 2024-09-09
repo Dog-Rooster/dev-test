@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 use App\Contracts\BookingServiceInterface;
 use App\Contracts\EventServiceInterface;
 use App\Contracts\TimeSlotServiceInterface;
+use App\Http\Requests\StoreBookingRequest;
 use Illuminate\Http\Request;
 use DateTimeZone;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Spatie\GoogleCalendar\Event as GoogleEvent;
+
 
 
 class BookingController extends Controller
@@ -34,7 +36,7 @@ class BookingController extends Controller
         return view('bookings.index', compact('bookings'));
     }
 
-    public function store(Request $request, $eventId)
+    public function store(StoreBookingRequest $request, $eventId)
     {
         $event = $this->eventService->getEvent($eventId);
         $selectedTimeZone = $request->input('timezone', 'Asia/Manila');

@@ -38,7 +38,7 @@ class EventReminder extends Notification implements ShouldQueue
                     ->line('Description: ' . $this->booking->event->description)
                     ->line('Event Date: ' . $formattedDate)
                     ->line('Event Time: ' . $formattedTime)
-                    ->line('Duration: ' . $this->booking->event->duration)
+                    ->line('Duration: ' . $this->booking->event->duration . ' minutes')
                     ->line('This is just a reminder that your event will start in one hour.')
                     ->line('Thank you for using our application!')
                     ->salutation('Best regards, Demo Booking');
