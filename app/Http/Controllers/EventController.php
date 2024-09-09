@@ -2,14 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Event;
-use Illuminate\Http\Request;
+use App\Contracts\EventServiceInterface;
 
 class EventController extends Controller
 {
+    protected $eventService;
+
+    public function __construct(EventServiceInterface $eventService)
+    {
+        $this->eventService = $eventService;
+    }
+
     public function index()
     {
-        $events = Event::all();
+        $events = $this->eventService->getAllEvents();
         return view('events.index', compact('events'));
     }
 }
