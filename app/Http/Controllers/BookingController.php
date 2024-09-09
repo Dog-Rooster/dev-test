@@ -6,6 +6,9 @@ use App\Contracts\EventServiceInterface;
 use App\Contracts\TimeSlotServiceInterface;
 use Illuminate\Http\Request;
 use DateTimeZone;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use Spatie\GoogleCalendar\Event as GoogleEvent;
 
 
 class BookingController extends Controller
@@ -35,6 +38,8 @@ class BookingController extends Controller
     {
         $event = $this->eventService->getEvent($eventId);
         $selectedTimeZone = $request->input('timezone', 'Asia/Manila');
+        $bookingDateTime = Carbon::createFromFormat('Y-m-d H:i', $request->input('booking_date') . ' ' . date('H:i',strtotime($request->input('booking_time'))) , $selectedTimeZone);
+        $endTime = $bookingDateTime->copy()->addMinutes($event->duration);
 
         $data = [
             'attendee_name' => $request->input('attendee_name'),
@@ -46,7 +51,21 @@ class BookingController extends Controller
             'event_id' => $event->id
         ];
 
-        $booking = $this->bookingService->createBooking($data);
+        try{
+            $booking = $this->bookingService->createBooking($data);
+
+            $googleEvent = new GoogleEvent();
+            $googleEvent->name = $event->name .' - '. $request->input('attendee_name');
+            $googleEvent->startDateTime = $bookingDateTime;
+            $googleEvent->endDateTime = $endTime;
+            $googleEvent->description = "Booking confirmed with ". $request->input('attendee_name');
+            $googleEvent->save();
+        
+
+        }catch(\Exception $e){
+            \Log::error('Error during booking process: ' . $e->getMessage());
+            abort(500);
+        }
 
         return view('bookings.thank-you', ['booking' => $booking]);
     }

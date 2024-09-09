@@ -9,7 +9,6 @@ use App\Models\Event;
 use App\Mail\BookingConfirmation;
 use Sabre\VObject\Component\VEvent;
 use Sabre\VObject\Component\VCalendar;
-use Spatie\GoogleCalendar\Event as GoogleEvent;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 
@@ -48,13 +47,6 @@ class ProcessBookings extends Command
                 $icsFile = $calendar->serialize(); 
     
                 Mail::to($booking->attendee_email)->send(new BookingConfirmation($icsFile, $booking->event, $booking));
-    
-                $googleEvent = new GoogleEvent();
-                $googleEvent->name = $booking->event->name .' - '. $booking->attendee_name;
-                $googleEvent->startDateTime = $bookingDateTime;
-                $googleEvent->endDateTime = $endTime;
-                $googleEvent->description = "Booking confirmed with ". $booking->attendee_name;
-                $googleEvent->save();
     
                 $booking->email_is_sent = true;
                 $booking->save();

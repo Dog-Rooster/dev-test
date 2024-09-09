@@ -8,6 +8,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
-Schedule::command('reminders:send')->everyMinute();
 Schedule::command('bookings:process')->everyMinute();
+Schedule::command('reminders:send')->everyMinute();
+
 

@@ -4,6 +4,7 @@
             <h1 class="text-2xl font-bold mb-6">Select a Time Slot for {{ $event->name }}</h1>
 
             <div class="mb-4">
+                
                 <form action="{{ route('bookings.create', $event->id) }}" method="GET" id="booking-form">
                     <label for="booking_date" class="block font-medium text-gray-700">Select Date:</label>
                     <input type="date" name="booking_date" id="booking_date" class="border rounded p-2 w-full"
@@ -33,7 +34,7 @@
                                 <form action="{{ route('bookings.create', $event->id) }}" method="GET" class="mt-2">
                                     <input type="hidden" name="booking_date" value="{{ $selectedDate }}">
                                     <input type="hidden" name="booking_time" value="{{ date('H:i',strtotime($time['time'])) }}">
-                                    <input type="hidden" name="timezone" value="{{ request('timezone') }}">
+                                    <input type="hidden" name="timezone" value="{{ $selectedTimeZone }}">
                                     <button type="submit"
                                         class="w-full px-4 py-2 bg-blue-600 text-white rounded time-slot-button">Select</button>
                                 </form>
@@ -42,6 +43,7 @@
                 </div>
             @endif
         @else
+        
             <div class="mt-8 p-4 bg-white border rounded-lg">
                 <h2 class="text-xl font-bold mb-4">Confirm Your Booking</h2>
                 <form action="{{ route('bookings.store', $event->id) }}" method="POST">
@@ -49,9 +51,10 @@
                     <p><strong>Event:</strong> {{ $event->name }}</p>
                     <p><strong>Date:</strong> {{ date('F j, Y', strtotime(request('booking_date'))) }}</p>
                     <p><strong>Time:</strong> {{ date('g:i A',strtotime(request('booking_time'))) }}</p>
+                    <p><strong>Timezone:</strong> {{ request('timezone') }}</p>
                     <input type="hidden" name="booking_date" value="{{ request('booking_date') }}">
                     <input type="hidden" name="booking_time" value="{{ request('booking_time') }}">
-                    <input type="hidden" name="timezone" value="{{ $selectedTimeZone }}">
+                    <input type="hidden" name="timezone" value="{{ request('timezone') }}">
                     <div class="mt-5">
                         <label for="attendee_name" class="block font-medium text-gray-700 w-3/12">Name:</label>
                         <input type="text" name="attendee_name" id="attendee_name" class="border rounded p-2 w-full" required>
