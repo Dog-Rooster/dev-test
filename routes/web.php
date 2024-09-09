@@ -22,10 +22,9 @@ Route::middleware('auth')->group(function () {
 Route::get('/', [EventController::class, 'index'])->name('events.index');
 
 Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
+Route::get('/bookings/{id}/thank-you', [BookingController::class, 'booking_thankyou'])->name('bookings.booking_thankyou');
 
 Route::get('/events/{event}/calendar', [BookingController::class, 'create'])->name('bookings.create');
 Route::post('/events/{event}/book', [BookingController::class, 'store'])->name('bookings.store');
-
-
 
 require __DIR__ . '/auth.php';

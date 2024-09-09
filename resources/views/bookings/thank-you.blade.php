@@ -9,8 +9,8 @@
                 <p class="text-gray-600 font-semibold">Booking Details:</p>
                 <ul class="list-disc pl-5">
                     <li><strong>Event Name:</strong> {{ $booking->event->name }}</li>
-                    <li><strong>Date:</strong> {{ $booking->booking_date }}</li>
-                    <li><strong>Time:</strong> {{ $booking->booking_time }}</li>
+                    <li><strong>Date:</strong> {{ date('F j, Y',strtotime($booking->booking_date)) }}</li>
+                    <li><strong>Time:</strong> {{date('g:i A',strtotime($booking->booking_time))}}</li>
                 </ul>
             </div>
             <div class="text-center">
