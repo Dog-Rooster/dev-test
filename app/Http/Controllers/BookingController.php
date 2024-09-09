@@ -10,8 +10,7 @@ use DateTimeZone;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Spatie\GoogleCalendar\Event as GoogleEvent;
-
-
+use Illuminate\Support\Facades\DB;
 
 class BookingController extends Controller
 {
@@ -53,6 +52,8 @@ class BookingController extends Controller
             'event_id' => $event->id
         ];
 
+        DB::beginTransaction();
+
         try{
             $booking = $this->bookingService->createBooking($data);
 
@@ -63,8 +64,11 @@ class BookingController extends Controller
             $googleEvent->description = "Booking confirmed with ". $request->input('attendee_name');
             $googleEvent->save();
         
+            DB::commit();
 
         }catch(\Exception $e){
+            DB::rollBack();
+            
             \Log::error('Error during booking process: ' . $e->getMessage());
             abort(500);
         }
