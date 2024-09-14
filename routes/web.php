@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\GoogleController;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -25,6 +26,8 @@ Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.ind
 
 Route::get('/events/{event}/calendar', [BookingController::class, 'create'])->name('bookings.create');
 Route::post('/events/{event}/book', [BookingController::class, 'store'])->name('bookings.store');
+
+Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 
 
 
