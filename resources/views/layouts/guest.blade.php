@@ -8,12 +8,17 @@
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
+    <style>
+        [x-cloak]{ display: none; }
+    </style>
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
 </head>
 
 <body class="font-sans text-gray-900 antialiased">
@@ -21,13 +26,13 @@
 
         {{-- <div
             class="w-full md:max-w-lg mt-6 px-6 py-4 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg"> --}}
-        <main class="flex items-center justify-center flex-col min-h-screen bg-gray-100 py-8 px-4">
+        <main class="flex items-center justify-center flex-col min-h-screen bg-gray-100 py-8 px-4 w-3/5">
             <div>
                 <a href="/">
                     <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
                 </a>
             </div>
-            <div class="bg-white p-6 rounded-lg shadow-lg max-w-4xl w-full">
+            <div class="bg-white p-6 rounded-lg shadow-lg w-full">
                 {{ $slot }}
             </div>
         </main>
@@ -38,6 +43,7 @@
             <p>&copy; {{ date('Y') }} Event Booking App. All rights reserved.</p>
         </div>
     </footer>
+    @livewireScripts
 </body>
 
 </html>

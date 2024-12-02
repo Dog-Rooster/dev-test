@@ -2,63 +2,37 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BookingRequest;
+use App\Jobs\CreateCalendarEvent;
 use App\Models\Booking;
 use App\Models\Event;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
+use App\Notifications\BookingsNotification;
 
 class BookingController extends Controller
 {
     public function index()
     {
         $bookings = Booking::with('event')->get();
-
         return view('bookings.index', compact('bookings'));
     }
 
-    public function store(Request $request, $eventId)
+    public function store(BookingRequest $request, $eventId)
     {
         $event = Event::findOrFail($eventId);
+        $booking = $event->bookings()->create($request->validated());
 
-        $booking = new Booking();
-        $booking->attendee_name = $request->input('attendee_name');
-        $booking->attendee_email = $request->input('attendee_email');
-        $booking->event_id = $eventId;
-        $booking->booking_date = $request->input('booking_date');
-        $booking->booking_time = $request->input('booking_time');
-        $booking->save();
+        // Dispatch a job to create the Google Calendar event
+        CreateCalendarEvent::dispatch($booking);
+
+        // Dispatch email notification
+        $booking->notify(new BookingsNotification($booking));
 
         return view('bookings.thank-you', ['booking' => $booking]);
     }
 
-    public function create(Request $request, $eventId)
+    public function create($eventId)
     {
         $event = Event::findOrFail($eventId);
-        $selectedDate = $request->input('booking_date', now()->toDateString());
-
-        $timeSlots = $this->generateTimeSlots($selectedDate);
-
-        return view('bookings.calendar', compact('event', 'timeSlots', 'selectedDate'));
-    }
-
-    private function generateTimeSlots($date)
-    {
-        $startOfDay = Carbon::parse($date)->startOfDay();
-        $endOfDay = Carbon::parse($date)->startOfDay()->addHours(24);
-        $interval = 30; // 30 minutes per time block
-
-        $timeSlots = [];
-
-        while ($startOfDay < $endOfDay) {
-            $end = $startOfDay->copy()->addMinutes($interval);
-
-            $timeSlots[] = [
-                'time' => $startOfDay->format('H:i'),
-            ];
-
-            $startOfDay = $end;
-        }
-
-        return $timeSlots;
+        return view('bookings.calendar', compact('event'));
     }
 }

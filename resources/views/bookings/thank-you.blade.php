@@ -1,5 +1,5 @@
 <x-guest-layout>
-    <div class="flex items-center justify-center bg-gray-100">
+    <div class="flex items-center justify-center">
         <div class="bg-white p-8 max-w-lg w-full">
             <h1 class="text-3xl font-bold mb-4 text-center text-green-600">Thank You!</h1>
             <p class="text-lg mb-4 text-gray-700 text-center">
@@ -11,6 +11,7 @@
                     <li><strong>Event Name:</strong> {{ $booking->event->name }}</li>
                     <li><strong>Date:</strong> {{ $booking->booking_date }}</li>
                     <li><strong>Time:</strong> {{ $booking->booking_time }}</li>
+                    <li><strong>Timezone:</strong> {{ $booking->timezone }}</li>
                 </ul>
             </div>
             <div class="text-center">
